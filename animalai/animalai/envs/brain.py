@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import io
 
-from typing import Dict
+from typing import Dict, List, Optional
 from PIL import Image
 
 logger = logging.getLogger("mlagents.envs")
@@ -91,6 +91,73 @@ class BrainInfo:
         )
         return brain_info
 
+    def merge(self, other):
+        # for i in range(len(self.visual_observations)):
+        #     self.visual_observations[i].extend(other.visual_observations[i])
+        self.visual_observations = np.append(self.visual_observations, other.visual_observations, axis=0)
+        self.vector_observations = np.append(
+            self.vector_observations, other.vector_observations, axis=0
+        )
+        self.text_observations.extend(other.text_observations)
+        self.memories = self.merge_memories(
+            self.memories, other.memories, self.agents, other.agents
+        )
+        self.rewards = safe_concat_lists(self.rewards, other.rewards)
+        self.local_done = safe_concat_lists(self.local_done, other.local_done)
+        self.max_reached = safe_concat_lists(self.max_reached, other.max_reached)
+        self.agents = safe_concat_lists(self.agents, other.agents)
+        self.previous_vector_actions = safe_concat_np_ndarray(
+            self.previous_vector_actions, other.previous_vector_actions
+        )
+        self.previous_text_actions = safe_concat_lists(
+            self.previous_text_actions, other.previous_text_actions
+        )
+        self.action_masks = safe_concat_np_ndarray(
+            self.action_masks, other.action_masks
+        )
+        # self.custom_observations = safe_concat_lists(
+        #     self.custom_observations, other.custom_observations
+        # )
+
+    @staticmethod
+    def merge_memories(m1, m2, agents1, agents2):
+        if len(m1) == 0 and len(m2) != 0:
+            m1 = np.zeros((len(agents1), m2.shape[1]))
+        elif len(m2) == 0 and len(m1) != 0:
+            m2 = np.zeros((len(agents2), m1.shape[1]))
+        elif m2.shape[1] > m1.shape[1]:
+            new_m1 = np.zeros((m1.shape[0], m2.shape[1]))
+            new_m1[0 : m1.shape[0], 0 : m1.shape[1]] = m1
+            return np.append(new_m1, m2, axis=0)
+        elif m1.shape[1] > m2.shape[1]:
+            new_m2 = np.zeros((m2.shape[0], m1.shape[1]))
+            new_m2[0 : m2.shape[0], 0 : m2.shape[1]] = m2
+            return np.append(m1, new_m2, axis=0)
+        return np.append(m1, m2, axis=0)
+
+
+def safe_concat_lists(l1: Optional[List], l2: Optional[List]):
+    if l1 is None and l2 is None:
+        return None
+    if l1 is None and l2 is not None:
+        return l2.copy()
+    if l1 is not None and l2 is None:
+        return l1.copy()
+    else:
+        copy = l1.copy()
+        copy.extend(l2)
+        return copy
+
+
+def safe_concat_np_ndarray(a1: Optional[np.ndarray], a2: Optional[np.ndarray]):
+    if a1 is not None and a1.size != 0:
+        if a2 is not None and a2.size != 0:
+            return np.append(a1, a2, axis=0)
+        else:
+            return a1.copy()
+    elif a2 is not None and a2.size != 0:
+        return a2.copy()
+    return None
 
 # Renaming of dictionary of brain name to BrainInfo for clarity
 AllBrainInfo = Dict[str, BrainInfo]
