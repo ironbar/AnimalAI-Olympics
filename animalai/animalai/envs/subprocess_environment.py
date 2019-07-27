@@ -179,7 +179,8 @@ class SubprocessUnityEnvironment(BaseUnityEnvironment):
         self.step_async(vector_action, memory, text_action, value)
         return self.step_await()
 
-    def reset(self, config=None, train_mode=True) -> AllBrainInfo:
+    def reset(self, config=None, train_mode=True, arenas_configurations=None) -> AllBrainInfo:
+        config = config or arenas_configurations
         self._broadcast_message("reset", (config, train_mode))
         reset_results = [self.envs[i].recv() for i in range(len(self.envs))]
         self._get_agent_counts(map(lambda r: r.payload, reset_results))
