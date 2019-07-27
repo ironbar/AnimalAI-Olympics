@@ -94,7 +94,7 @@ class BrainInfo:
     def merge(self, other):
         # for i in range(len(self.visual_observations)):
         #     self.visual_observations[i].extend(other.visual_observations[i])
-        self.visual_observations = np.append(self.visual_observations, other.visual_observations, axis=0)
+        self.visual_observations = np.concatenate([self.visual_observations, other.visual_observations], axis=1)
         self.vector_observations = np.append(
             self.vector_observations, other.vector_observations, axis=0
         )
