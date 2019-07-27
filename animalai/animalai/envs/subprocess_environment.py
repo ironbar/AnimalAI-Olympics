@@ -69,6 +69,14 @@ def worker(parent_conn: Connection, pickled_env_factory: str, worker_id: int):
                 _send_response("step", all_brain_info)
             elif cmd.name == "external_brains":
                 _send_response("external_brains", env.external_brains)
+            elif cmd.name == "external_brain_names":
+                _send_response("external_brain_names", env.external_brain_names)
+            elif cmd.name == "brains":
+                brains = env.brains
+                for key in brains:
+                    brains[key].vector_action_descriptions = list(brains[key].vector_action_descriptions)
+                    brains[key].vector_action_space_size = list(brains[key].vector_action_space_size)
+                _send_response("brains", brains)
             elif cmd.name == "reset_parameters":
                 _send_response("reset_parameters", env.reset_parameters)
             elif cmd.name == "reset":
@@ -200,7 +208,11 @@ class SubprocessUnityEnvironment(BaseUnityEnvironment):
     def external_brain_names(self):
         self.envs[0].send("external_brain_names")
         return self.envs[0].recv().payload
-        #return self.envs[0].external_brain_names
+
+    @property
+    def brains(self):
+        self.envs[0].send("brains")
+        return self.envs[0].recv().payload
 
     def close(self):
         for env in self.envs:
