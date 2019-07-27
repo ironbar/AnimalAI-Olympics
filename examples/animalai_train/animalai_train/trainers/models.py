@@ -143,11 +143,23 @@ class LearningModel(object):
         :return: List of hidden layer tensors.
         """
         with tf.variable_scope(scope):
-            conv1 = tf.layers.conv2d(image_input, 16, kernel_size=[8, 8], strides=[4, 4],
-                                     activation=tf.nn.elu, reuse=reuse, name="conv_1")
-            conv2 = tf.layers.conv2d(conv1, 32, kernel_size=[4, 4], strides=[2, 2],
-                                     activation=tf.nn.elu, reuse=reuse, name="conv_2")
-            hidden = c_layers.flatten(conv2)
+            # conv1 = tf.layers.conv2d(image_input, 16, kernel_size=[8, 8], strides=[4, 4],
+            #                          activation=tf.nn.elu, reuse=reuse, name="conv_1")
+            # conv2 = tf.layers.conv2d(conv1, 32, kernel_size=[4, 4], strides=[2, 2],
+            #                          activation=tf.nn.elu, reuse=reuse, name="conv_2")
+            # hidden = c_layers.flatten(conv2)
+            output = tf.layers.conv2d(image_input, 8, kernel_size=[3, 3], strides=[1, 1],
+                                      activation=tf.nn.relu, reuse=reuse, name="conv_1")
+            output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
+            output = tf.layers.conv2d(output, 8, kernel_size=[3, 3], strides=[1, 1],
+                                      activation=tf.nn.relu, reuse=reuse, name="conv_2")
+            output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
+            output = tf.layers.conv2d(output, 16, kernel_size=[3, 3], strides=[1, 1],
+                                      activation=tf.nn.relu, reuse=reuse, name="conv_3")
+            output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
+            output = tf.layers.conv2d(output, 16, kernel_size=[3, 3], strides=[1, 1],
+                                      activation=tf.nn.relu, reuse=reuse, name="conv_4")
+            hidden = c_layers.flatten(output)
 
         with tf.variable_scope(scope + '/' + 'flat_encoding'):
             hidden_flat = self.create_vector_observation_encoder(hidden, h_size, activation,
