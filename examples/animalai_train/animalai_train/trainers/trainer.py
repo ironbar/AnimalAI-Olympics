@@ -6,8 +6,11 @@ import numpy as np
 
 from animalai.envs import UnityException, AllBrainInfo
 
+import importlib
+logging.shutdown()
+importlib.reload(logging)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("mlagents.trainers")
-
 
 class UnityTrainerException(UnityException):
     """
