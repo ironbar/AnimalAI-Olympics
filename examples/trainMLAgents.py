@@ -5,36 +5,58 @@ from animalai.envs.arena_config import ArenaConfig
 import random
 import yaml
 import sys
+import argparse
 from functools import partial
 import numpy as np
+import os
 
 from animalai.envs.subprocess_environment import SubprocessUnityEnvironment
 
 
-# ML-agents parameters for training
+def train(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    args = parse_args(args)
 
-env_path = '../env/AnimalAI'
-worker_id = random.randint(1, 100)
-seed = 10
-base_port = 5005
-sub_id = 1
-n_envs = 8
-N_ARENAS = 4
-run_id = '008_multi_workers_%ienv_%iarenas' % (n_envs, N_ARENAS)
-save_freq = 5000
-curriculum_file = None
-load_model = False
-train_model = True
-keep_checkpoints = 5000
-lesson = 0
-run_seed = 1
-docker_target_name = None
-no_graphics = False
-trainer_config_path = '/media/guillermo/Data/Kaggle/animalai/agents/006_ml_agents_first_steps/trainings/004_train_simple_better_conf/trainer_config.yaml'
-model_path = './models/{run_id}'.format(run_id=run_id)
-summaries_dir = './summaries'
-maybe_meta_curriculum = None
+    # ML-agents parameters for training
+    env_path = '../env/AnimalAI'
+    worker_id = random.randint(1, 100)
+    seed = 10
+    base_port = 5005
+    sub_id = 1
+    run_id = '%s_%ienv_%iarenas' % (
+        os.path.basename(os.path.dirname(os.path.dirname(args.trainer_config_path))),
+        args.n_envs, args.n_arenas)
+    save_freq = 5000
+    curriculum_file = None
+    train_model = True
+    keep_checkpoints = 5000
+    lesson = 0
+    run_seed = 1
+    docker_target_name = None
+    no_graphics = False
+    model_path = './models/{run_id}'.format(run_id=run_id)
+    summaries_dir = './summaries'
+    maybe_meta_curriculum = None
 
+    arena_config_in = ArenaConfig(args.arena_config)
+    trainer_config = load_config(args.trainer_config_path)
+    env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)
+    env = SubprocessUnityEnvironment(env_factory, args.n_envs)
+    # env = init_environment(worker_id, env_path, docker_target_name, no_graphics)
+
+    external_brains = {}
+    for brain_name in env.external_brain_names:
+        external_brains[brain_name] = env.brains[brain_name]
+        print(vars(env.brains[brain_name]))
+
+    # Create controller and begin training.
+    tc = TrainerController(model_path, summaries_dir, run_id + '-' + str(sub_id),
+                        save_freq, maybe_meta_curriculum,
+                        args.load_model, train_model,
+                        keep_checkpoints, lesson, external_brains, run_seed, arena_config_in)
+    tc.start_learning(env, trainer_config)
+    env.close()
 
 def load_config(trainer_config_path):
     try:
@@ -50,8 +72,7 @@ def load_config(trainer_config_path):
                                         'Trainer Config from this path : {}'
                                         .format(trainer_config_path))
 
-
-def init_environment(worker_id, env_path, docker_target_name, no_graphics):
+def init_environment(worker_id, env_path, docker_target_name, no_graphics, n_arenas):
     if env_path is not None:
         # Strip out executable extensions if passed
         env_path = (env_path.strip()
@@ -62,7 +83,7 @@ def init_environment(worker_id, env_path, docker_target_name, no_graphics):
     docker_training = docker_target_name is not None
 
     return UnityEnvironment(
-        n_arenas=N_ARENAS,             # Change this to train on more arenas
+        n_arenas=n_arenas,             # Change this to train on more arenas
         file_name=env_path,
         worker_id=worker_id,
         seed=worker_id,
@@ -70,26 +91,23 @@ def init_environment(worker_id, env_path, docker_target_name, no_graphics):
         play=False
     )
 
+def parse_args(args):
+    epilog = """
+    python trainMLAgents.py /media/guillermo/Data/Kaggle/animalai/agents/012_even_more_memory/data/training_002.yaml /media/guillermo/Data/Kaggle/animalai/agents/012_even_more_memory/data/trainer_config.yaml --n_envs 8 --n_arenas 32
+    """
+    description = """
+    Train using MLAgents and PPO algorithm
+    """
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=epilog)
+    parser.add_argument('arena_config', help='Path to the file with configuration for the arena')
+    parser.add_argument('trainer_config_path', help='Path to the file with configuration for training')
+    parser.add_argument('--n_envs', type=int, default=8, help='Number of environments to run')
+    parser.add_argument('--n_arenas', type=int, default=32, help='Number of arenas on each environment')
+    parser.add_argument('--load_model', action='store_true')
+    return parser.parse_args(args)
 
-# If no configuration file is provided we default to all objects placed randomly
-if len(sys.argv) > 1:
-    arena_config_in = ArenaConfig(sys.argv[1])
-else:
-    arena_config_in = ArenaConfig('configs/exampleTraining.yaml')
-
-trainer_config = load_config(trainer_config_path)
-env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path)
-env = SubprocessUnityEnvironment(env_factory, n_envs)
-# env = init_environment(worker_id, env_path, docker_target_name, no_graphics)
-
-external_brains = {}
-for brain_name in env.external_brain_names:
-    external_brains[brain_name] = env.brains[brain_name]
-
-# Create controller and begin training.
-tc = TrainerController(model_path, summaries_dir, run_id + '-' + str(sub_id),
-                       save_freq, maybe_meta_curriculum,
-                       load_model, train_model,
-                       keep_checkpoints, lesson, external_brains, run_seed, arena_config_in)
-tc.start_learning(env, trainer_config)
-env.close()
+if __name__ == '__main__':
+    train()
