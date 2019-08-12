@@ -41,15 +41,16 @@ def train(args=None):
 
     arena_config_in = ArenaConfig(args.arena_config)
     trainer_config = load_config(args.trainer_config_path)
-    env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)
-    env = SubprocessUnityEnvironment(env_factory, args.n_envs)
-    # env = init_environment(worker_id, env_path, docker_target_name, no_graphics)
+    if args.n_envs > 1:
+        env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)
+        env = SubprocessUnityEnvironment(env_factory, args.n_envs)
+    else:
+        env = init_environment(worker_id, env_path, docker_target_name, no_graphics, n_arenas=args.n_arenas)
 
     external_brains = {}
     for brain_name in env.external_brain_names:
         external_brains[brain_name] = env.brains[brain_name]
         print(vars(env.brains[brain_name]))
-
     # Create controller and begin training.
     tc = TrainerController(model_path, summaries_dir, run_id + '-' + str(sub_id),
                         save_freq, maybe_meta_curriculum,
