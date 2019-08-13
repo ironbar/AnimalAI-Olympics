@@ -27,7 +27,7 @@ def train(args=None):
     run_id = '%s_%ienv_%iarenas' % (
         os.path.basename(os.path.dirname(os.path.dirname(args.trainer_config_path))),
         args.n_envs, args.n_arenas)
-    save_freq = 5000
+    save_freq = args.save_freq
     curriculum_file = None
     train_model = True
     keep_checkpoints = 5000
@@ -108,6 +108,7 @@ def parse_args(args):
     parser.add_argument('--n_envs', type=int, default=8, help='Number of environments to run')
     parser.add_argument('--n_arenas', type=int, default=32, help='Number of arenas on each environment')
     parser.add_argument('--load_model', action='store_true')
+    parser.add_argument('--save_freq', type=int, default=1000, help='Number of steps between each saving of the model.')
     return parser.parse_args(args)
 
 if __name__ == '__main__':
