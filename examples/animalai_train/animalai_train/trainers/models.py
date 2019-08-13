@@ -131,7 +131,7 @@ class LearningModel(object):
         return hidden
 
     def create_visual_observation_encoder(self, image_input, h_size, activation, num_layers, scope,
-                                          reuse):
+                                          reuse, visual_encoding_conf):
         """
         Builds a set of visual (CNN) encoders.
         :param reuse: Whether to re-use the weights within the same scope.
@@ -140,25 +140,25 @@ class LearningModel(object):
         :param h_size: Hidden layer size.
         :param activation: What type of activation function to use for layers.
         :param num_layers: number of hidden layers to create.
+        :param visual_encoding_conf: Dictionary with configuration for the visual encoding
         :return: List of hidden layer tensors.
         """
         with tf.variable_scope(scope):
+            # Old architecture
             # conv1 = tf.layers.conv2d(image_input, 16, kernel_size=[8, 8], strides=[4, 4],
             #                          activation=tf.nn.elu, reuse=reuse, name="conv_1")
             # conv2 = tf.layers.conv2d(conv1, 32, kernel_size=[4, 4], strides=[2, 2],
             #                          activation=tf.nn.elu, reuse=reuse, name="conv_2")
             # hidden = c_layers.flatten(conv2)
-            output = tf.layers.conv2d(image_input, 8, kernel_size=[3, 3], strides=[1, 1],
-                                      activation=tf.nn.relu, reuse=reuse, name="conv_1")
-            output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
-            output = tf.layers.conv2d(output, 8, kernel_size=[3, 3], strides=[1, 1],
-                                      activation=tf.nn.relu, reuse=reuse, name="conv_2")
-            output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
-            output = tf.layers.conv2d(output, 16, kernel_size=[3, 3], strides=[1, 1],
-                                      activation=tf.nn.relu, reuse=reuse, name="conv_3")
-            output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
-            output = tf.layers.conv2d(output, 16, kernel_size=[3, 3], strides=[1, 1],
-                                      activation=tf.nn.relu, reuse=reuse, name="conv_4")
+            # New configurable architecture
+            kernels = [int(_value) for _value in visual_encoding_conf['kernels']]
+            print('Creating visual encoding with kernels: %s' % str(kernels))
+            for idx, n_kernels in enumerate(kernels[:-1]):
+                output = tf.layers.conv2d(image_input, n_kernels, kernel_size=[3, 3], strides=[1, 1],
+                                        activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+1))
+                output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
+            output = tf.layers.conv2d(output, kernels[-1], kernel_size=[3, 3], strides=[1, 1],
+                                      activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+2))
             hidden = c_layers.flatten(output)
 
         with tf.variable_scope(scope + '/' + 'flat_encoding'):
@@ -186,12 +186,13 @@ class LearningModel(object):
         output = tf.concat([tf.multinomial(tf.log(normalized_probs[k]), 1) for k in range(len(action_size))], axis=1)
         return output, tf.concat([tf.log(normalized_probs[k] + 1.0e-10) for k in range(len(action_size))], axis=1)
 
-    def create_observation_streams(self, num_streams, h_size, num_layers):
+    def create_observation_streams(self, num_streams, h_size, num_layers, visual_encoding_conf):
         """
         Creates encoding stream for observations.
         :param num_streams: Number of streams to create.
         :param h_size: Size of hidden linear layers in stream.
         :param num_layers: Number of hidden linear layers in stream.
+        :param visual_encoding_conf: Dictionary with configuration for the visual encoding
         :return: List of encoded streams.
         """
         brain = self.brain
@@ -215,7 +216,8 @@ class LearningModel(object):
                                                                             activation_fn,
                                                                             num_layers,
                                                                             "main_graph_{}_encoder{}"
-                                                                            .format(i, j), False)
+                                                                            .format(i, j), False,
+                                                                            visual_encoding_conf=visual_encoding_conf)
                     visual_encoders.append(encoded_visual)
                 hidden_visual = tf.concat(visual_encoders, axis=1)
             if brain.vector_observation_space_size > 0:
@@ -319,13 +321,14 @@ class LearningModel(object):
         self.old_log_probs = tf.reduce_sum((tf.identity(self.all_old_log_probs)), axis=1,
                                            keepdims=True)
 
-    def create_dc_actor_critic(self, h_size, num_layers):
+    def create_dc_actor_critic(self, h_size, num_layers, visual_encoding_conf):
         """
         Creates Discrete control actor-critic model.
         :param h_size: Size of hidden linear layers.
         :param num_layers: Number of hidden linear layers.
+        :param visual_encoding_conf: Dictionary with configuration for the visual encoding
         """
-        hidden_streams = self.create_observation_streams(1, h_size, num_layers)
+        hidden_streams = self.create_observation_streams(1, h_size, num_layers, visual_encoding_conf=visual_encoding_conf)
         hidden = hidden_streams[0]
 
         if self.use_recurrent:

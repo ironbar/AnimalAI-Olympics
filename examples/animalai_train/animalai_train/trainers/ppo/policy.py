@@ -35,6 +35,7 @@ class PPOPolicy(Policy):
                                   use_curiosity=bool(trainer_params['use_curiosity']),
                                   curiosity_strength=float(trainer_params['curiosity_strength']),
                                   curiosity_enc_size=float(trainer_params['curiosity_enc_size']),
+                                  visual_encoding_conf=trainer_params['visual_encoding'],
                                   seed=seed)
 
         if load:
@@ -80,7 +81,15 @@ class PPOPolicy(Policy):
             epsilon = np.random.normal(
                 size=(len(brain_info.vector_observations), self.model.act_size[0]))
             feed_dict[self.model.epsilon] = epsilon
+
         feed_dict = self._fill_eval_dict(feed_dict, brain_info)
+
+        # Move always forward
+        action_masks = np.ones((1, sum(self.brain.vector_action_space_size)))
+        # action_masks[:, 0] = 0
+        action_masks[:, 2] = 0
+        feed_dict[self.model.action_masks] = action_masks
+
         run_out = self._execute_model(feed_dict, self.inference_dict)
         if self.use_continuous_act:
             run_out['random_normal_epsilon'] = epsilon
@@ -112,8 +121,12 @@ class PPOPolicy(Policy):
             if self.use_recurrent:
                 feed_dict[self.model.prev_action] = mini_batch['prev_action'].reshape(
                     [-1, len(self.model.act_size)])
-            feed_dict[self.model.action_masks] = mini_batch['action_mask'].reshape(
+            action_masks = mini_batch['action_mask'].reshape(
                 [-1, sum(self.brain.vector_action_space_size)])
+            # Move always forward
+            # action_masks[:, 0] = 0
+            action_masks[:, 2] = 0
+            feed_dict[self.model.action_masks] = action_masks
         if self.use_vec_obs:
             feed_dict[self.model.vector_in] = mini_batch['vector_obs'].reshape(
                 [-1, self.vec_obs_size])

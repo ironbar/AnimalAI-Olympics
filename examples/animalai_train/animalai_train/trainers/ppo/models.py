@@ -10,7 +10,7 @@ logger = logging.getLogger("mlagents.envs")
 class PPOModel(LearningModel):
     def __init__(self, brain, lr=1e-4, h_size=128, epsilon=0.2, beta=1e-3, max_step=5e6,
                  normalize=False, use_recurrent=False, num_layers=2, m_size=None, use_curiosity=False,
-                 curiosity_strength=0.01, curiosity_enc_size=128, seed=0):
+                 curiosity_strength=0.01, curiosity_enc_size=128, seed=0, visual_encoding_conf=None):
         """
         Takes a Unity environment and model-specific hyper-parameters and returns the
         appropriate PPO agent model for the environment.
@@ -35,10 +35,11 @@ class PPOModel(LearningModel):
             self.create_cc_actor_critic(h_size, num_layers)
             self.entropy = tf.ones_like(tf.reshape(self.value, [-1])) * self.entropy
         else:
-            self.create_dc_actor_critic(h_size, num_layers)
+            self.create_dc_actor_critic(h_size, num_layers, visual_encoding_conf)
         if self.use_curiosity:
             self.curiosity_enc_size = curiosity_enc_size
             self.curiosity_strength = curiosity_strength
+            self._visual_encoding_conf = visual_encoding_conf
             encoded_state, encoded_next_state = self.create_curiosity_encoders()
             self.create_inverse_model(encoded_state, encoded_next_state)
             self.create_forward_model(encoded_state, encoded_next_state)
@@ -76,13 +77,13 @@ class PPOModel(LearningModel):
                 # Create the encoder ops for current and next visual input. Not that these encoders are siamese.
                 encoded_visual = self.create_visual_observation_encoder(self.visual_in[i], self.curiosity_enc_size,
                                                                         self.swish, 1, "stream_{}_visual_obs_encoder"
-                                                                        .format(i), False)
+                                                                        .format(i), False, visual_encoding_conf=self._visual_encoding_conf)
 
                 encoded_next_visual = self.create_visual_observation_encoder(self.next_visual_in[i],
                                                                              self.curiosity_enc_size,
                                                                              self.swish, 1,
                                                                              "stream_{}_visual_obs_encoder".format(i),
-                                                                             True)
+                                                                             True, visual_encoding_conf=self._visual_encoding_conf)
                 visual_encoders.append(encoded_visual)
                 next_visual_encoders.append(encoded_next_visual)
 
