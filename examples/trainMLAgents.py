@@ -9,6 +9,7 @@ import argparse
 from functools import partial
 import numpy as np
 import os
+import glob
 
 from animalai.envs.subprocess_environment import SubprocessUnityEnvironment
 
@@ -39,7 +40,11 @@ def train(args=None):
     summaries_dir = './summaries'
     maybe_meta_curriculum = None
 
-    arena_config_in = ArenaConfig(args.arena_config)
+    if os.path.isdir(args.arena_config):
+        arena_config_paths = glob.glob(os.path.join(args.arena_config, '*.yaml'))
+        arena_config_in = [ArenaConfig(arena_config_path) for arena_config_path in arena_config_paths]
+    else:
+        arena_config_in = ArenaConfig(args.arena_config)
     trainer_config = load_config(args.trainer_config_path)
     if args.n_envs > 1:
         env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)

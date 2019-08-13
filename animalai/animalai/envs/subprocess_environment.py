@@ -181,7 +181,11 @@ class SubprocessUnityEnvironment(BaseUnityEnvironment):
 
     def reset(self, config=None, train_mode=True, arenas_configurations=None) -> AllBrainInfo:
         config = config or arenas_configurations
-        self._broadcast_message("reset", (config, train_mode))
+        if isinstance(config, list):
+            for idx, env in enumerate(self.envs):
+                env.send("reset", (config[idx % len(config)], train_mode))
+        else:
+            self._broadcast_message("reset", (config, train_mode))
         reset_results = [self.envs[i].recv() for i in range(len(self.envs))]
         self._get_agent_counts(map(lambda r: r.payload, reset_results))
 
