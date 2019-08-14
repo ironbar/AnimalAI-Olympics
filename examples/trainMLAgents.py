@@ -25,9 +25,12 @@ def train(args=None):
     seed = 10
     base_port = 5005
     sub_id = 1
-    run_id = '%s_%ienv_%iarenas' % (
-        os.path.basename(os.path.dirname(os.path.dirname(args.trainer_config_path))),
-        args.n_envs, args.n_arenas)
+    if args.verbose_id:
+        run_id = '%s_%ienv_%iarenas' % (
+            os.path.basename(os.path.dirname(os.path.dirname(args.trainer_config_path))),
+            args.n_envs, args.n_arenas)
+    else:
+        run_id = os.path.basename(os.path.dirname(os.path.dirname(args.trainer_config_path)))
     save_freq = args.save_freq
     curriculum_file = None
     train_model = True
@@ -36,7 +39,7 @@ def train(args=None):
     run_seed = 1
     docker_target_name = None
     no_graphics = False
-    model_path = './models/{run_id}'.format(run_id=run_id)
+    model_path = '%s/%s' % (os.path.dirname(args.trainer_config_path), run_id)
     summaries_dir = './summaries'
     maybe_meta_curriculum = None
 
@@ -114,6 +117,7 @@ def parse_args(args):
     parser.add_argument('--n_arenas', type=int, default=32, help='Number of arenas on each environment')
     parser.add_argument('--load_model', action='store_true')
     parser.add_argument('--save_freq', type=int, default=1000, help='Number of steps between each saving of the model.')
+    parser.add_argument('--verbose_id', action='store_true')
     return parser.parse_args(args)
 
 if __name__ == '__main__':
