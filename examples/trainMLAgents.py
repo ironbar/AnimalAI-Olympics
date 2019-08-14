@@ -34,12 +34,13 @@ def train(args=None):
     save_freq = args.save_freq
     curriculum_file = None
     train_model = True
-    keep_checkpoints = 5000
+    keep_checkpoints = 5
     lesson = 0
     run_seed = 1
     docker_target_name = None
     no_graphics = False
-    model_path = '%s/%s' % (os.path.dirname(args.trainer_config_path), run_id)
+    # model_path = '%s/%s' % (os.path.dirname(args.trainer_config_path), run_id)
+    model_path = './models/%s' % (run_id)
     summaries_dir = './summaries'
     maybe_meta_curriculum = None
 
