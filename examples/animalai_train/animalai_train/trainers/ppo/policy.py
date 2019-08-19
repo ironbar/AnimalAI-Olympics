@@ -20,6 +20,7 @@ class PPOPolicy(Policy):
         super().__init__(seed, brain, trainer_params)
         self.has_updated = False
         self.use_curiosity = bool(trainer_params['use_curiosity'])
+        self.action_mask_index = trainer_params['action_mask_index']
 
         with self.graph.as_default():
             self.model = PPOModel(brain,
@@ -84,10 +85,10 @@ class PPOPolicy(Policy):
 
         feed_dict = self._fill_eval_dict(feed_dict, brain_info)
 
-        # Move always forward
         action_masks = np.ones((1, sum(self.brain.vector_action_space_size)))
-        # action_masks[:, 0] = 0
-        action_masks[:, 2] = 0
+        # Restrict movements
+        for idx in self.action_mask_index:
+            action_masks[:, idx] = 0
         feed_dict[self.model.action_masks] = action_masks
 
         run_out = self._execute_model(feed_dict, self.inference_dict)
@@ -123,9 +124,9 @@ class PPOPolicy(Policy):
                     [-1, len(self.model.act_size)])
             action_masks = mini_batch['action_mask'].reshape(
                 [-1, sum(self.brain.vector_action_space_size)])
-            # Move always forward
-            # action_masks[:, 0] = 0
-            action_masks[:, 2] = 0
+            # Restrict movements
+            for idx in self.action_mask_index:
+                action_masks[:, idx] = 0
             feed_dict[self.model.action_masks] = action_masks
         if self.use_vec_obs:
             feed_dict[self.model.vector_in] = mini_batch['vector_obs'].reshape(
