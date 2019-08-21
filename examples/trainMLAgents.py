@@ -50,6 +50,7 @@ def train(args=None):
     else:
         arena_config_in = ArenaConfig(args.arena_config)
     trainer_config = load_config(args.trainer_config_path)
+    trainer_config['reset_steps'] = args.reset_steps
     if args.n_envs > 1:
         env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)
         env = SubprocessUnityEnvironment(env_factory, args.n_envs)
@@ -117,6 +118,7 @@ def parse_args(args):
     parser.add_argument('--n_envs', type=int, default=8, help='Number of environments to run')
     parser.add_argument('--n_arenas', type=int, default=32, help='Number of arenas on each environment')
     parser.add_argument('--load_model', action='store_true')
+    parser.add_argument('--reset_steps', action='store_true')
     parser.add_argument('--save_freq', type=int, default=1000, help='Number of steps between each saving of the model.')
     parser.add_argument('--verbose_id', action='store_true')
     return parser.parse_args(args)
