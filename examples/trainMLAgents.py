@@ -50,7 +50,7 @@ def train(args=None):
     else:
         arena_config_in = ArenaConfig(args.arena_config)
     trainer_config = load_config(args.trainer_config_path)
-    trainer_config['reset_steps'] = args.reset_steps
+    trainer_config['Learner']['reset_steps'] = args.reset_steps
     if args.n_envs > 1:
         env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)
         env = SubprocessUnityEnvironment(env_factory, args.n_envs)
