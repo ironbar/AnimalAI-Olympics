@@ -138,6 +138,9 @@ class Policy(object):
         """
         self.sess.run(self.model.increment_step)
 
+    def reset_step(self):
+        self.sess.run(self.model.global_step.assign(0))
+
     def get_inference_vars(self):
         """
         :return:list of inference var names

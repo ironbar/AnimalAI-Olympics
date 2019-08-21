@@ -41,6 +41,12 @@ class PPOPolicy(Policy):
 
         if load:
             self._load_graph()
+            try:
+                if trainer_params['reset_steps']:
+                    logger.info('Resetting the number of steps')
+                    self.reset_step()
+            except KeyError:
+                logger.warning('reset_steps not found in trainer_params')
         else:
             self._initialize_graph()
 
