@@ -34,7 +34,7 @@ def train(args=None):
     save_freq = args.save_freq
     curriculum_file = None
     train_model = True
-    keep_checkpoints = 5
+    keep_checkpoints = args.keep_checkpoints
     lesson = 0
     run_seed = 1
     docker_target_name = None
@@ -120,6 +120,7 @@ def parse_args(args):
     parser.add_argument('--load_model', action='store_true')
     parser.add_argument('--reset_steps', action='store_true')
     parser.add_argument('--save_freq', type=int, default=1000, help='Number of steps between each saving of the model.')
+    parser.add_argument('--keep_checkpoints', type=int, default=5, help='Number of checkpoints that will be kept.')
     parser.add_argument('--verbose_id', action='store_true')
     return parser.parse_args(args)
 
