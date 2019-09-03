@@ -31,6 +31,8 @@ def train(args=None):
             args.n_envs, args.n_arenas)
     else:
         run_id = os.path.basename(os.path.dirname(os.path.dirname(args.trainer_config_path)))
+    if args.suffix:
+        run_id += '_%s' % args.suffix
     save_freq = args.save_freq
     curriculum_file = None
     train_model = True
@@ -122,6 +124,7 @@ def parse_args(args):
     parser.add_argument('--save_freq', type=int, default=1000, help='Number of steps between each saving of the model.')
     parser.add_argument('--keep_checkpoints', type=int, default=5, help='Number of checkpoints that will be kept.')
     parser.add_argument('--verbose_id', action='store_true')
+    parser.add_argument('--suffix', default='')
     return parser.parse_args(args)
 
 if __name__ == '__main__':
