@@ -8,6 +8,8 @@ import os
 import glob
 
 
+from animalai.envs.arena_config import ArenaConfig
+
 def train(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -26,7 +28,7 @@ def train(args=None):
         command += ' --save_freq %i' % args.save_freq
         command += ' --keep_checkpoints %i' % args.keep_checkpoints
         command += ' --suffix %s' % suffix
-        if idx:
+        if idx and idx > args.start_config_idx:
             command += ' --load_model'
             command += ' --reset_steps'
         else:
@@ -34,18 +36,19 @@ def train(args=None):
                 command += ' --load_model'
             if args.reset_initial_model:
                 command += ' --reset_steps'
-        ret = os.system(command)
-        if ret:
-            break
+        if idx >= args.start_config_idx:
+            print(command)
+            ret = os.system(command)
+            if ret:
+                break
         # copy the model for the next training
-        if idx < len(arena_config_paths) - 1:
+        if idx < len(arena_config_paths) - 1 and idx >= args.start_config_idx - 1:
             model_in = '%s_%s' % (os.path.basename(args.agent_path), suffix)
             model_out = '%s_%s' % (os.path.basename(args.agent_path), os.path.basename(arena_config_paths[idx+1]))
             copy_model_for_next_train(model_in, model_out)
 
 def get_n_arenas(arena_config_path):
-    # TODO: detect automatically the number of arenas
-    return 4
+    return len(ArenaConfig(glob.glob(os.path.join(arena_config_path, '*.yaml'))[0]).arenas)
 
 def copy_model_for_next_train(model_in, model_out):
     command = 'cp -r models/%s models/%s' % (model_in, model_out)
@@ -76,6 +79,7 @@ def parse_args(args):
     parser.add_argument('--keep_checkpoints', type=int, default=10, help='Number of checkpoints that will be kept.')
     parser.add_argument('--load_initial_model', action='store_true')
     parser.add_argument('--reset_initial_model', action='store_true')
+    parser.add_argument('--start_config_idx', type=int, default=0)
     return parser.parse_args(args)
 
 if __name__ == '__main__':
