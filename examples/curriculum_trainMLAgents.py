@@ -48,14 +48,12 @@ def copy_model_for_next_train(model_in, model_out):
     print(command)
     os.system(command)
     model_filepaths = sorted(glob.glob('models/%s/Learner/model-*' % model_out))
-    steps = [int(os.path.basename(filepath).split('model-')[-1].split('.cptk')[0]) for filepath in model_filepaths]
-    max_steps = max(steps)
-    if len(model_filepaths) > 3:
-        for model_filepath, step in zip(model_filepaths, steps):
-            if step < max_steps:
-                print('Deleting: %s' % model_filepath)
-                os.remove(model_filepath)
-
+    with open('models/%s/Learner/checkpoint' % model_out, 'r') as f:
+        model_to_keep = f.readline().split('"')[1]
+    for model_filepath in model_filepaths:
+        if not model_to_keep in model_filepath:
+            print('Deleting: %s' % model_filepath)
+            os.remove(model_filepath)
 
 def parse_args(args):
     epilog = """
