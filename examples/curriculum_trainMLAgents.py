@@ -16,7 +16,7 @@ def train(args=None):
     args = parse_args(args)
 
     trainer_config_path = os.path.join(args.agent_path, 'data/trainer_config.yaml')
-    arena_config_paths = sorted(glob.glob(os.path.join(args.agent_path, 'data/*')))
+    arena_config_paths = sorted(glob.glob(os.path.join(args.agent_path, 'data/arena_configs/*')))
     arena_config_paths = [folder for folder in arena_config_paths if os.path.isdir(folder)]
     for idx, arena_config_path in enumerate(arena_config_paths):
         suffix = os.path.basename(arena_config_path)
