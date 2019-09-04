@@ -26,10 +26,14 @@ def train(args=None):
         command += ' --save_freq %i' % args.save_freq
         command += ' --keep_checkpoints %i' % args.keep_checkpoints
         command += ' --suffix %s' % suffix
-        # TODO: add more flexibility for model loading and resetting
         if idx:
             command += ' --load_model'
             command += ' --reset_steps'
+        else:
+            if args.load_initial_model:
+                command += ' --load_model'
+            if args.reset_initial_model:
+                command += ' --reset_steps'
         ret = os.system(command)
         if ret:
             break
@@ -70,6 +74,8 @@ def parse_args(args):
     parser.add_argument('--n_envs', type=int, default=4, help='Number of environments to run')
     parser.add_argument('--save_freq', type=int, default=10000, help='Number of steps between each saving of the model.')
     parser.add_argument('--keep_checkpoints', type=int, default=10, help='Number of checkpoints that will be kept.')
+    parser.add_argument('--load_initial_model', action='store_true')
+    parser.add_argument('--reset_initial_model', action='store_true')
     return parser.parse_args(args)
 
 if __name__ == '__main__':
