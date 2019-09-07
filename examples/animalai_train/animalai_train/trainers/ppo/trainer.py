@@ -60,7 +60,7 @@ class PPOTrainer(Trainer):
         if not os.path.exists(self.summary_path):
             os.makedirs(self.summary_path)
 
-        self.summary_writer = tf.summary.FileWriter(self.summary_path)
+        self.summary_writer = tf.summary.FileWriter(self.summary_path, self.policy.graph)
 
     def __str__(self):
         return '''Hyperparameters for the PPO Trainer of brain {0}: \n{1}'''.format(
