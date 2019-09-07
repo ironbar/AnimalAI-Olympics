@@ -21,7 +21,7 @@ def train(args=None):
     for idx, arena_config_path in enumerate(arena_config_paths):
         suffix = os.path.basename(arena_config_path)
         print('\n'*5)
-        print('\tTraining with arena config: %s' % os.path.basename(suffix))
+        print('\tTraining with arena config: %s' % suffix)
         command = "python trainMLAgents.py %s %s" % (arena_config_path, trainer_config_path)
         command += ' --n_envs %i' % args.n_envs
         command += ' --n_arenas %i' % get_n_arenas(arena_config_path)
@@ -43,8 +43,11 @@ def train(args=None):
                 break
         # copy the model for the next training
         if idx < len(arena_config_paths) - 1 and idx >= args.start_config_idx - 1:
-            model_in = '%s_%s' % (os.path.basename(args.agent_path), suffix)
-            model_out = '%s_%s' % (os.path.basename(args.agent_path), os.path.basename(arena_config_paths[idx+1]))
+            model_name = os.path.basename(args.agent_path)
+            if not model_name:
+                model_name = os.path.basename(os.path.dirname(args.agent_path))
+            model_in = '%s_%s' % (model_name, suffix)
+            model_out = '%s_%s' % (model_name, os.path.basename(arena_config_paths[idx+1]))
             copy_model_for_next_train(model_in, model_out)
 
 def get_n_arenas(arena_config_path):
