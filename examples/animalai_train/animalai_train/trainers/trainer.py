@@ -178,10 +178,16 @@ class Trainer(object):
                     stat_mean = float(np.mean(self.stats[key]))
                     summary.value.add(tag='{}'.format(key), simple_value=stat_mean)
                     if key == 'Environment/Cumulative Reward':
-                        summary.value.add(tag='Environment/Std Reward', simple_value=float(np.std(self.stats[key])))
-                        summary.value.add(tag='Environment/Median Reward', simple_value=float(np.median(self.stats[key])))
-                        summary.value.add(tag='Environment/Max Reward', simple_value=float(np.max(self.stats[key])))
-                        summary.value.add(tag='Environment/Min Reward', simple_value=float(np.min(self.stats[key])))
+                        summary.value.add(tag='Reward/Std Reward', simple_value=float(np.std(self.stats[key])))
+                        summary.value.add(tag='Reward/Median Reward', simple_value=float(np.median(self.stats[key])))
+                        summary.value.add(tag='Reward/Max Reward', simple_value=float(np.max(self.stats[key])))
+                        summary.value.add(tag='Reward/Min Reward', simple_value=float(np.min(self.stats[key])))
+                        summary.value.add(tag='Environment/Episodes played', simple_value=float(len(self.stats[key])))
+                    if key == 'Environment/Episode Length':
+                        summary.value.add(tag='Episode/Std Episode Length', simple_value=float(np.std(self.stats[key])))
+                        summary.value.add(tag='Episode/Median Episode Length', simple_value=float(np.median(self.stats[key])))
+                        summary.value.add(tag='Episode/Max Episode Length', simple_value=float(np.max(self.stats[key])))
+                        summary.value.add(tag='Episode/Min Episode Length', simple_value=float(np.min(self.stats[key])))
                     self.stats[key] = []
             summary.value.add(tag='Environment/Lesson', simple_value=lesson_num)
             self.summary_writer.add_summary(summary, self.get_step)
