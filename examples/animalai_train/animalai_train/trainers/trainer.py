@@ -177,6 +177,11 @@ class Trainer(object):
                 if len(self.stats[key]) > 0:
                     stat_mean = float(np.mean(self.stats[key]))
                     summary.value.add(tag='{}'.format(key), simple_value=stat_mean)
+                    if key == 'Environment/Cumulative Reward':
+                        summary.value.add(tag='Environment/Std Reward', simple_value=float(np.std(self.stats[key])))
+                        summary.value.add(tag='Environment/Median Reward', simple_value=float(np.median(self.stats[key])))
+                        summary.value.add(tag='Environment/Max Reward', simple_value=float(np.max(self.stats[key])))
+                        summary.value.add(tag='Environment/Min Reward', simple_value=float(np.max(self.stats[key])))
                     self.stats[key] = []
             summary.value.add(tag='Environment/Lesson', simple_value=lesson_num)
             self.summary_writer.add_summary(summary, self.get_step)
