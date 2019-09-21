@@ -181,7 +181,7 @@ class Trainer(object):
                         summary.value.add(tag='Environment/Std Reward', simple_value=float(np.std(self.stats[key])))
                         summary.value.add(tag='Environment/Median Reward', simple_value=float(np.median(self.stats[key])))
                         summary.value.add(tag='Environment/Max Reward', simple_value=float(np.max(self.stats[key])))
-                        summary.value.add(tag='Environment/Min Reward', simple_value=float(np.max(self.stats[key])))
+                        summary.value.add(tag='Environment/Min Reward', simple_value=float(np.min(self.stats[key])))
                     self.stats[key] = []
             summary.value.add(tag='Environment/Lesson', simple_value=lesson_num)
             self.summary_writer.add_summary(summary, self.get_step)
