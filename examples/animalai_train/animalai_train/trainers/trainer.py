@@ -183,11 +183,13 @@ class Trainer(object):
                         summary.value.add(tag='Reward/Max Reward', simple_value=float(np.max(self.stats[key])))
                         summary.value.add(tag='Reward/Min Reward', simple_value=float(np.min(self.stats[key])))
                         summary.value.add(tag='Environment/Episodes played', simple_value=float(len(self.stats[key])))
+                        summary.value.add(tag='Reward', histo=_create_HistogramProto(self.stats[key]))
                     if key == 'Environment/Episode Length':
                         summary.value.add(tag='Episode/Std Episode Length', simple_value=float(np.std(self.stats[key])))
                         summary.value.add(tag='Episode/Median Episode Length', simple_value=float(np.median(self.stats[key])))
                         summary.value.add(tag='Episode/Max Episode Length', simple_value=float(np.max(self.stats[key])))
                         summary.value.add(tag='Episode/Min Episode Length', simple_value=float(np.min(self.stats[key])))
+                        summary.value.add(tag='Episode Length', histo=_create_HistogramProto(self.stats[key]))
                     self.stats[key] = []
             summary.value.add(tag='Environment/Lesson', simple_value=lesson_num)
             self.summary_writer.add_summary(summary, self.get_step)
@@ -210,3 +212,30 @@ class Trainer(object):
             logger.info(
                 "Cannot write text summary for Tensorboard. Tensorflow version must be r1.2 or above.")
             pass
+
+def _create_HistogramProto(values, bins=50):
+    # Convert to a numpy array
+    values = np.array(values)
+
+    # Create histogram using numpy
+    counts, bin_edges = np.histogram(values, bins=bins)
+
+    # Fill fields of histogram proto
+    hist = tf.HistogramProto()
+    hist.min = float(np.min(values))
+    hist.max = float(np.max(values))
+    hist.num = int(np.prod(values.shape))
+    hist.sum = float(np.sum(values))
+    hist.sum_squares = float(np.sum(values**2))
+
+    # Requires equal number as bins, where the first goes from -DBL_MAX to bin_edges[1]
+    # See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/framework/summary.proto#L30
+    # Thus, we drop the start of the first bin
+    bin_edges = bin_edges[1:]
+
+    # Add bin edges and counts
+    for edge in bin_edges:
+        hist.bucket_limit.append(edge)
+    for c in counts:
+        hist.bucket.append(c)
+    return hist
