@@ -52,6 +52,7 @@ class UnityEnvironment(object):
         self.inference = inference
         self.resolution = resolution
         self.port = base_port + worker_id
+        np.random.seed(seed)
         self._buffer_size = 12000
         self._version_ = "1.0"
         self._loaded = False  # If true, this means the environment was successfully loaded
@@ -250,7 +251,7 @@ class UnityEnvironment(object):
             self.arenas_configurations.update(arenas_configurations)
 
             outputs = self.communicator.exchange(
-                self._generate_reset_input(train_mode, arenas_configurations)
+                self._generate_reset_input(train_mode, self.arenas_configurations)
             )
             if outputs is None:
                 raise KeyboardInterrupt

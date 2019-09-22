@@ -58,6 +58,7 @@ class TrainerController(object):
         self.seed = training_seed
         self.config = config
         self.update_config = True
+        self._reset_env_period = 0
         np.random.seed(self.seed)
         tf.set_random_seed(self.seed)
 
@@ -183,14 +184,16 @@ class TrainerController(object):
             return env.reset(config=self.meta_curriculum.get_config())
         else:
             if self.update_config:
-                return env.reset(arenas_configurations=self.config)
                 self.update_config = False
+                return env.reset(arenas_configurations=self.config)
             else:
                 return env.reset()
 
     def start_learning(self, env, trainer_config):
         # TODO: Should be able to start learning at different lesson numbers
         # for each curriculum.
+        self._reset_env_period = trainer_config['Learner'].get('reset_env_period', 0)
+
         if self.meta_curriculum is not None:
             self.meta_curriculum.set_all_curriculums_to_lesson_num(self.lesson)
         self._create_model_path(self.model_path)
@@ -256,6 +259,13 @@ class TrainerController(object):
                 if changed:
                     self.trainers[brain_name].reward_buffer.clear()
         elif env.global_done:
+            curr_info = self._reset_env(env)
+            for brain_name, trainer in self.trainers.items():
+                trainer.end_episode()
+
+        # TODO: improve this condition
+        if self._reset_env_period and (self.global_step + 1) % self._reset_env_period == 0:
+            print('reset environment every %i steps' % self._reset_env_period)
             curr_info = self._reset_env(env)
             for brain_name, trainer in self.trainers.items():
                 trainer.end_episode()
