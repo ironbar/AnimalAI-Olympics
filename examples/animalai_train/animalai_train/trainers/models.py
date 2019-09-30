@@ -158,7 +158,7 @@ class LearningModel(object):
                 output = tf.layers.conv2d(output, n_kernels, kernel_size=[3, 3], strides=[1, 1],
                                         activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+1))
                 output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
-            output = tf.layers.conv2d(output, kernels[-1], kernel_size=[3, 3], strides=[1, 1],
+            output = tf.layers.conv2d(output, kernels[-1], kernel_size=[1, 1], strides=[1, 1],
                                       activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+2))
             hidden = c_layers.flatten(output)
 
