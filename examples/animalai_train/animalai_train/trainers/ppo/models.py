@@ -64,54 +64,55 @@ class PPOModel(LearningModel):
         encoded_state_list = []
         encoded_next_state_list = []
 
-        if self.vis_obs_size > 0:
-            self.next_visual_in = []
-            visual_encoders = []
-            next_visual_encoders = []
-            for i in range(self.vis_obs_size):
-                # Create input ops for next (t+1) visual observations.
-                next_visual_input = self.create_visual_input(self.brain.camera_resolutions[i],
-                                                             name="next_visual_observation_" + str(i))
-                self.next_visual_in.append(next_visual_input)
+        with tf.variable_scope('curiosity_encoders'):
+            if self.vis_obs_size > 0:
+                self.next_visual_in = []
+                visual_encoders = []
+                next_visual_encoders = []
+                for i in range(self.vis_obs_size):
+                    # Create input ops for next (t+1) visual observations.
+                    next_visual_input = self.create_visual_input(self.brain.camera_resolutions[i],
+                                                                name="next_visual_observation_" + str(i))
+                    self.next_visual_in.append(next_visual_input)
 
-                # Create the encoder ops for current and next visual input. Not that these encoders are siamese.
-                encoded_visual = self.create_visual_observation_encoder(self.visual_in[i], self.curiosity_enc_size,
-                                                                        self.swish, 1, "stream_{}_visual_obs_encoder"
-                                                                        .format(i), False, visual_encoding_conf=self._visual_encoding_conf)
+                    # Create the encoder ops for current and next visual input. Not that these encoders are siamese.
+                    encoded_visual = self.create_visual_observation_encoder(self.visual_in[i], self.curiosity_enc_size,
+                                                                            self.swish, 1, "stream_{}_visual_obs_encoder"
+                                                                            .format(i), False, visual_encoding_conf=self._visual_encoding_conf)
 
-                encoded_next_visual = self.create_visual_observation_encoder(self.next_visual_in[i],
-                                                                             self.curiosity_enc_size,
-                                                                             self.swish, 1,
-                                                                             "stream_{}_visual_obs_encoder".format(i),
-                                                                             True, visual_encoding_conf=self._visual_encoding_conf)
-                visual_encoders.append(encoded_visual)
-                next_visual_encoders.append(encoded_next_visual)
+                    encoded_next_visual = self.create_visual_observation_encoder(self.next_visual_in[i],
+                                                                                self.curiosity_enc_size,
+                                                                                self.swish, 1,
+                                                                                "stream_{}_visual_obs_encoder".format(i),
+                                                                                True, visual_encoding_conf=self._visual_encoding_conf)
+                    visual_encoders.append(encoded_visual)
+                    next_visual_encoders.append(encoded_next_visual)
 
-            hidden_visual = tf.concat(visual_encoders, axis=1)
-            hidden_next_visual = tf.concat(next_visual_encoders, axis=1)
-            encoded_state_list.append(hidden_visual)
-            encoded_next_state_list.append(hidden_next_visual)
+                hidden_visual = tf.concat(visual_encoders, axis=1)
+                hidden_next_visual = tf.concat(next_visual_encoders, axis=1)
+                encoded_state_list.append(hidden_visual)
+                encoded_next_state_list.append(hidden_next_visual)
 
-        if self.vec_obs_size > 0:
-            # Create the encoder ops for current and next vector input. Not that these encoders are siamese.
-            # Create input op for next (t+1) vector observation.
-            self.next_vector_in = tf.placeholder(shape=[None, self.vec_obs_size], dtype=tf.float32,
-                                                 name='next_vector_observation')
+            if self.vec_obs_size > 0:
+                # Create the encoder ops for current and next vector input. Not that these encoders are siamese.
+                # Create input op for next (t+1) vector observation.
+                self.next_vector_in = tf.placeholder(shape=[None, self.vec_obs_size], dtype=tf.float32,
+                                                    name='next_vector_observation')
 
-            encoded_vector_obs = self.create_vector_observation_encoder(self.vector_in,
-                                                                        self.curiosity_enc_size,
-                                                                        self.swish, 2, "vector_obs_encoder",
-                                                                        False)
-            encoded_next_vector_obs = self.create_vector_observation_encoder(self.next_vector_in,
-                                                                             self.curiosity_enc_size,
-                                                                             self.swish, 2,
-                                                                                 "vector_obs_encoder",
-                                                                             True)
-            encoded_state_list.append(encoded_vector_obs)
-            encoded_next_state_list.append(encoded_next_vector_obs)
+                encoded_vector_obs = self.create_vector_observation_encoder(self.vector_in,
+                                                                            self.curiosity_enc_size,
+                                                                            self.swish, 2, "vector_obs_encoder",
+                                                                            False)
+                encoded_next_vector_obs = self.create_vector_observation_encoder(self.next_vector_in,
+                                                                                self.curiosity_enc_size,
+                                                                                self.swish, 2,
+                                                                                    "vector_obs_encoder",
+                                                                                True)
+                encoded_state_list.append(encoded_vector_obs)
+                encoded_next_state_list.append(encoded_next_vector_obs)
 
-        encoded_state = tf.concat(encoded_state_list, axis=1)
-        encoded_next_state = tf.concat(encoded_next_state_list, axis=1)
+            encoded_state = tf.concat(encoded_state_list, axis=1)
+            encoded_next_state = tf.concat(encoded_next_state_list, axis=1)
         return encoded_state, encoded_next_state
 
     def create_inverse_model(self, encoded_state, encoded_next_state):
