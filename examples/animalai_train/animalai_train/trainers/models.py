@@ -187,7 +187,7 @@ class LearningModel(object):
         output = tf.concat([tf.multinomial(tf.log(normalized_probs[k]), 1) for k in range(len(action_size))], axis=1)
         return output, tf.concat([tf.log(normalized_probs[k] + 1.0e-10) for k in range(len(action_size))], axis=1)
 
-    def create_observation_streams(self, num_streams, h_size, num_layers, visual_encoding_conf):
+    def create_observation_streams(self, num_streams, visual_encoding_conf, vector_encoding):
         """
         Creates encoding stream for observations.
         :param num_streams: Number of streams to create.
@@ -213,21 +213,17 @@ class LearningModel(object):
                 hidden_state, hidden_visual = None, None
                 if self.vis_obs_size > 0:
                     for j in range(brain.number_visual_observations):
-                        encoded_visual = self.create_visual_observation_encoder(self.visual_in[j],
-                                                                                visual_encoding_conf['hidden_units'],
-                                                                                activation_fn,
-                                                                                visual_encoding_conf['num_layers'],
-                                                                                "main_graph_{}_encoder{}"
-                                                                                .format(i, j), False,
-                                                                                visual_encoding_conf=visual_encoding_conf)
+                        encoded_visual = self.create_visual_observation_encoder(
+                            self.visual_in[j], visual_encoding_conf['hidden_units'],
+                            activation_fn, visual_encoding_conf['num_layers'],
+                            "main_graph_{}_encoder{}".format(i, j), False,
+                            visual_encoding_conf=visual_encoding_conf)
                         visual_encoders.append(encoded_visual)
                     hidden_visual = tf.concat(visual_encoders, axis=1)
                 if brain.vector_observation_space_size > 0:
-                    hidden_state = self.create_vector_observation_encoder(vector_observation_input,
-                                                                        h_size, activation_fn,
-                                                                        num_layers,
-                                                                        "main_graph_{}".format(i),
-                                                                        False)
+                    hidden_state = self.create_vector_observation_encoder(
+                        vector_observation_input, vector_encoding['hidden_units'], activation_fn,
+                        vector_encoding['num_layers'], "main_graph_{}".format(i), False)
                 if hidden_state is not None and hidden_visual is not None:
                     final_hidden = tf.concat([hidden_visual, hidden_state], axis=1)
                 elif hidden_state is None and hidden_visual is not None:
@@ -272,11 +268,9 @@ class LearningModel(object):
         :param num_layers: Number of hidden linear layers.
         :param visual_encoding_conf: Dictionary with configuration for the visual encoding
         """
-        h_size = architecture['hidden_units']
-        num_layers = architecture['num_layers']
-        visual_encoding_conf = architecture['visual_encoding']
         with tf.variable_scope('dc_actor_critic'):
-            hidden_streams = self.create_observation_streams(1, h_size, num_layers, visual_encoding_conf=visual_encoding_conf)
+            hidden_streams = self.create_observation_streams(
+                1, visual_encoding_conf=architecture['visual_encoding'], vector_encoding=architecture['vector_encoding'])
             hidden = hidden_streams[0]
 
             if self.use_recurrent:
