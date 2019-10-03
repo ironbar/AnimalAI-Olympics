@@ -26,18 +26,12 @@ class PPOPolicy(Policy):
             self.model = PPOModel(brain,
                                   architecture=trainer_params['model_architecture'],
                                   lr=float(trainer_params['learning_rate']),
-                                  h_size=int(trainer_params['hidden_units']),
                                   epsilon=float(trainer_params['epsilon']),
                                   beta=float(trainer_params['beta']),
                                   max_step=float(trainer_params['max_steps']),
-                                  normalize=trainer_params['normalize'],
-                                  use_recurrent=trainer_params['use_recurrent'],
-                                  num_layers=int(trainer_params['num_layers']),
-                                  m_size=self.m_size,
                                   use_curiosity=bool(trainer_params['use_curiosity']),
                                   curiosity_strength=float(trainer_params['curiosity_strength']),
                                   curiosity_enc_size=float(trainer_params['curiosity_enc_size']),
-                                  visual_encoding_conf=trainer_params['visual_encoding'],
                                   seed=seed)
 
         if load:
