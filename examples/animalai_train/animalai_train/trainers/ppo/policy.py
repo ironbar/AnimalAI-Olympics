@@ -24,6 +24,7 @@ class PPOPolicy(Policy):
 
         with self.graph.as_default():
             self.model = PPOModel(brain,
+                                  architecture=trainer_params['model_architecture'],
                                   lr=float(trainer_params['learning_rate']),
                                   h_size=int(trainer_params['hidden_units']),
                                   epsilon=float(trainer_params['epsilon']),

@@ -10,8 +10,9 @@ logger = logging.getLogger("mlagents.envs")
 class LearningModel(object):
     _version_number_ = 2
 
-    def __init__(self, m_size, normalize, use_recurrent, brain, seed):
+    def __init__(self, architecture, m_size, normalize, use_recurrent, brain, seed):
         tf.set_random_seed(seed)
+        self.architecture = architecture
         self.brain = brain
         self.vector_in = None
         self.global_step, self.increment_step = self.create_global_steps()
