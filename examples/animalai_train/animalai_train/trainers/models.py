@@ -146,13 +146,6 @@ class LearningModel(object):
         """
         kernels = [int(_value) for _value in visual_encoding_conf['kernels']]
         with tf.variable_scope(scope):
-            # Old architecture
-            # conv1 = tf.layers.conv2d(image_input, 16, kernel_size=[8, 8], strides=[4, 4],
-            #                          activation=tf.nn.elu, reuse=reuse, name="conv_1")
-            # conv2 = tf.layers.conv2d(conv1, 32, kernel_size=[4, 4], strides=[2, 2],
-            #                          activation=tf.nn.elu, reuse=reuse, name="conv_2")
-            # hidden = c_layers.flatten(conv2)
-            # New configurable architecture
             print('Creating visual encoding with kernels: %s' % str(kernels))
             output = image_input
             for idx, n_kernels in enumerate(kernels[:-1]):
