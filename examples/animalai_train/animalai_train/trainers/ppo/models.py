@@ -29,10 +29,7 @@ class PPOModel(LearningModel):
         self.architecture = architecture
         self.use_curiosity = use_curiosity
         self.last_reward, self.new_reward, self.update_reward = self.create_reward_encoder()
-        self.create_dc_actor_critic(
-            self.architecture['hidden_units'],
-            self.architecture['num_layers'],
-            self.architecture['visual_encoding'])
+        self.create_dc_actor_critic(self.architecture)
         if self.use_curiosity:
             self.curiosity_enc_size = curiosity_enc_size
             self.curiosity_strength = curiosity_strength

@@ -265,13 +265,16 @@ class LearningModel(object):
             recurrent_output = tf.reshape(recurrent_output, shape=[-1, _half_point])
         return recurrent_output, tf.concat([lstm_state_out.c, lstm_state_out.h], axis=1)
 
-    def create_dc_actor_critic(self, h_size, num_layers, visual_encoding_conf):
+    def create_dc_actor_critic(self, architecture):
         """
         Creates Discrete control actor-critic model.
         :param h_size: Size of hidden linear layers.
         :param num_layers: Number of hidden linear layers.
         :param visual_encoding_conf: Dictionary with configuration for the visual encoding
         """
+        h_size = architecture['hidden_units']
+        num_layers = architecture['num_layers']
+        visual_encoding_conf = architecture['visual_encoding']
         with tf.variable_scope('dc_actor_critic'):
             hidden_streams = self.create_observation_streams(1, h_size, num_layers, visual_encoding_conf=visual_encoding_conf)
             hidden = hidden_streams[0]
