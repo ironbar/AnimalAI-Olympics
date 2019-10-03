@@ -10,7 +10,7 @@ logger = logging.getLogger("mlagents.envs")
 class LearningModel(object):
     _version_number_ = 2
 
-    def __init__(self, architecture, m_size, normalize, use_recurrent, brain, seed):
+    def __init__(self, architecture, brain, seed):
         tf.set_random_seed(seed)
         self.architecture = architecture
         self.brain = brain
@@ -21,12 +21,12 @@ class LearningModel(object):
         self.sequence_length = tf.placeholder(shape=None, dtype=tf.int32, name='sequence_length')
         self.mask_input = tf.placeholder(shape=[None], dtype=tf.float32, name='masks')
         self.mask = tf.cast(self.mask_input, tf.int32)
-        self.use_recurrent = use_recurrent
+        self.use_recurrent = architecture['use_recurrent']
         if self.use_recurrent:
-            self.m_size = m_size
+            self.m_size = architecture['memory_size']
         else:
             self.m_size = 0
-        self.normalize = normalize
+        self.normalize = architecture['normalize']
         self.act_size = brain.vector_action_space_size
         self.vec_obs_size = brain.vector_observation_space_size * \
                             brain.num_stacked_vector_observations
