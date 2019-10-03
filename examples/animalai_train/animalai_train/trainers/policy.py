@@ -40,7 +40,7 @@ class Policy(object):
         self.sequence_length = 1
         self.seed = seed
         self.brain = brain
-        self.use_recurrent = trainer_parameters["use_recurrent"]
+        self.use_recurrent = trainer_parameters['model_architecture']["use_recurrent"]
         self.use_continuous_act = (brain.vector_action_space_type == "continuous")
         self.model_path = trainer_parameters["model_path"]
         self.keep_checkpoints = trainer_parameters.get("keep_checkpoints", 5)
@@ -50,8 +50,8 @@ class Policy(object):
         self.sess = tf.Session(config=config, graph=self.graph)
         self.saver = None
         if self.use_recurrent:
-            self.m_size = trainer_parameters["memory_size"]
-            self.sequence_length = trainer_parameters["sequence_length"]
+            self.m_size = trainer_parameters['model_architecture']["memory_size"]
+            self.sequence_length = trainer_parameters['model_architecture']["sequence_length"]
             if self.m_size == 0:
                 raise UnityPolicyException("The memory size for brain {0} is 0 even "
                                            "though the trainer uses recurrent."

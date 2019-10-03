@@ -30,10 +30,10 @@ class PPOTrainer(Trainer):
         :param run_id: The The identifier of the current run
         """
         super(PPOTrainer, self).__init__(brain, trainer_parameters, training, run_id)
-        self.param_keys = ['batch_size', 'beta', 'buffer_size', 'epsilon', 'gamma', 'hidden_units', 'lambd',
-                           'learning_rate', 'max_steps', 'normalize', 'num_epoch', 'num_layers',
-                           'time_horizon', 'sequence_length', 'summary_freq', 'use_recurrent',
-                           'summary_path', 'memory_size', 'use_curiosity', 'curiosity_strength',
+        self.param_keys = ['batch_size', 'beta', 'buffer_size', 'epsilon', 'gamma', 'lambd',
+                           'learning_rate', 'max_steps', 'num_epoch',
+                           'time_horizon', 'summary_freq', 'model_architecture',
+                           'summary_path', 'use_curiosity', 'curiosity_strength',
                            'curiosity_enc_size', 'model_path']
 
         self.check_param_keys()
