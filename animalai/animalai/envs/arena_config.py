@@ -100,12 +100,14 @@ class ArenaConfig(yaml.YAMLObject):
             for arena_i in arenas_configurations.arenas:
                 self.arenas[arena_i] = copy.copy(arenas_configurations.arenas[arena_i])
         else:
-            # shuffle arenas
-            n_arenas = len(self.arenas)
-            new_order = np.arange(n_arenas)
-            np.random.shuffle(new_order)
-            shuffled_arenas = {idx: self.arenas[new_idx] for idx, new_idx in enumerate(new_order)}
-            self.arenas = shuffled_arenas
+            self.shuffle_arenas()
+
+    def shuffle_arenas(self):
+        n_arenas = len(self.arenas)
+        new_order = np.arange(n_arenas)
+        np.random.shuffle(new_order)
+        shuffled_arenas = {idx: self.arenas[new_idx] for idx, new_idx in enumerate(new_order)}
+        self.arenas = shuffled_arenas
 
 
 def constructor_arena(loader, node):
