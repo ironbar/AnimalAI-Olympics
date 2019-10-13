@@ -12,6 +12,7 @@ import os
 import glob
 
 from animalai.envs.subprocess_environment import SubprocessUnityEnvironment
+from orangutan.env import EnvWrapper
 
 
 def train(args=None):
@@ -95,7 +96,7 @@ def init_environment(worker_id, env_path, docker_target_name, no_graphics, n_are
                     .replace('.x86', ''))
     docker_training = docker_target_name is not None
 
-    return UnityEnvironment(
+    return EnvWrapper(
         n_arenas=n_arenas,             # Change this to train on more arenas
         file_name=env_path,
         worker_id=worker_id,
