@@ -35,7 +35,7 @@ if len(sys.argv) > 1:
     arena_config_in = ArenaConfig(sys.argv[1])
 else:
     arena_config_in = ArenaConfig('configs/allObjectsRandom.yaml')
-
+arena_config_in.shuffle_arenas()
 env = init_environment(env_path, docker_target_name, no_graphics, worker_id, run_seed)
 
 # We can pass a different configuration at each env.reset() call. You can therefore load different YAML files between
