@@ -10,6 +10,7 @@ from functools import partial
 import numpy as np
 import os
 import glob
+from tqdm import tqdm
 
 from animalai.envs.subprocess_environment import SubprocessUnityEnvironment
 from orangutan.env import EnvWrapper
@@ -49,7 +50,7 @@ def train(args=None):
 
     if os.path.isdir(args.arena_config):
         arena_config_paths = glob.glob(os.path.join(args.arena_config, '*.yaml'))
-        arena_config_in = [ArenaConfig(arena_config_path) for arena_config_path in arena_config_paths]
+        arena_config_in = [ArenaConfig(arena_config_path) for arena_config_path in tqdm(arena_config_paths, desc='loading arenas config')]
     else:
         arena_config_in = ArenaConfig(args.arena_config)
     trainer_config = load_config(args.trainer_config_path)

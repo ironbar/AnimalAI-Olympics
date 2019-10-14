@@ -4,6 +4,7 @@ import numpy as np
 import cloudpickle
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
+from tqdm import tqdm
 
 from animalai.envs import UnityEnvironment
 from animalai.envs.base_unity_environment import BaseUnityEnvironment
@@ -100,7 +101,7 @@ class SubprocessUnityEnvironment(BaseUnityEnvironment):
         self.env_agent_counts = {}
         self.waiting = False
         start_idx = np.random.randint(0, 1000)
-        for worker_id in range(n_env):
+        for worker_id in tqdm(range(n_env), desc='creating environments'):
             self.envs.append(self.create_worker(worker_id+start_idx, env_factory))
 
     @staticmethod
