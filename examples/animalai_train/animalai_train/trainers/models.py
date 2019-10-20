@@ -146,16 +146,19 @@ class LearningModel(object):
         """
         kernels = [int(_value) for _value in visual_encoding_conf['kernels']]
         with tf.variable_scope(scope):
-            print('Creating visual encoding with kernels: %s' % str(kernels))
+            zipped_params = zip(
+                visual_encoding_conf['kernels'],
+                visual_encoding_conf['kernel_sizes'],
+                visual_encoding_conf['strides'],
+                visual_encoding_conf['use_maxpool'],
+                )
             output = image_input
-            for idx, n_kernels in enumerate(kernels[:-1]):
-                output = tf.layers.conv2d(output, n_kernels, kernel_size=[3, 3], strides=[1, 1],
-                                        activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+1))
-                output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
-            output = tf.layers.conv2d(output, kernels[-1], kernel_size=[1, 1], strides=[1, 1],
-                                      activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+2))
+            for idx, (filters, kernel_size, strides, use_maxpool) in enumerate(zipped_params):
+                output = tf.layers.conv2d(output, filters, kernel_size=kernel_size, strides=strides,
+                                          activation=tf.nn.relu, reuse=reuse, name="conv_%i" % (idx+1))
+                if use_maxpool:
+                    output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
             hidden = c_layers.flatten(output)
-
             hidden_flat = self.create_vector_observation_encoder(hidden, h_size, activation,
                                                                 num_layers, 'flat_encoding', reuse)
         return hidden_flat
@@ -297,17 +300,22 @@ class LearningModel(object):
         Creates Discrete control actor-critic model.
         :param architecture: dictionary with all the configuration for the architecture
         """
-        with tf.variable_scope('dc_actor_critic'):
+        with tf.variable_scope('feedforward_dc_actor_critic'):
             hidden_streams = self.create_observation_streams(
                 1, visual_encoding_conf=architecture['visual_encoding'], vector_encoding=architecture['vector_encoding'])
             hidden = hidden_streams[0]
 
-            self.prev_action = tf.placeholder(shape=[None, len(self.act_size)], dtype=tf.int32,
-                                            name='prev_action')
-            prev_action_oh = tf.concat([
-                tf.one_hot(self.prev_action[:, i], self.act_size[i]) for i in
-                range(len(self.act_size))], axis=1)
+            with tf.variable_scope('prev_action'):
+                self.prev_action = tf.placeholder(shape=[None, len(self.act_size)], dtype=tf.int32,
+                                                name='prev_action')
+                prev_action_oh = tf.concat([
+                    tf.one_hot(self.prev_action[:, i], self.act_size[i]) for i in
+                    range(len(self.act_size))], axis=1)
             hidden = tf.concat([hidden, prev_action_oh], axis=1)
+
+            hidden = self.create_vector_observation_encoder(
+                hidden, architecture['output_mlp']['hidden_units'], self.swish,
+                architecture['output_mlp']['num_layers'], "output_mlp", False)
 
             self._prepare_model_outputs(hidden)
 
