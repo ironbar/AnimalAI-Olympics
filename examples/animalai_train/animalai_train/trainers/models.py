@@ -313,6 +313,14 @@ class LearningModel(object):
                     range(len(self.act_size))], axis=1)
             hidden = tf.concat([hidden, prev_action_oh], axis=1)
 
+            if self.use_recurrent:
+                self.memory_in = tf.placeholder(shape=[None, self.m_size], dtype=tf.float32,
+                                                name='recurrent_in')
+                recurrent_output, memory_out = self.create_recurrent_encoder(
+                    hidden, self.memory_in, self.sequence_length)
+                self.memory_out = tf.identity(memory_out, name='recurrent_out')
+                hidden = tf.concat([hidden, recurrent_output], axis=1)
+
             hidden = self.create_vector_observation_encoder(
                 hidden, architecture['output_mlp']['hidden_units'], self.swish,
                 architecture['output_mlp']['num_layers'], "output_mlp", False)
