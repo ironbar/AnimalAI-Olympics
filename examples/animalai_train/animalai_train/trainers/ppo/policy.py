@@ -21,6 +21,7 @@ class PPOPolicy(Policy):
         self.has_updated = False
         self.use_curiosity = bool(trainer_params['use_curiosity'])
         self.action_mask_index = trainer_params['action_mask_index']
+        self.use_previous_action = trainer_params['model_architecture']['use_previous_action']
 
         with self.graph.as_default():
             self.model = PPOModel(brain,
@@ -73,16 +74,14 @@ class PPOPolicy(Policy):
                      self.model.sequence_length: 1}
         epsilon = None
         if self.use_recurrent:
-            if not self.use_continuous_act:
-                feed_dict[self.model.prev_action] = brain_info.previous_vector_actions.reshape(
-                    [-1, len(self.model.act_size)])
+            feed_dict[self.model.prev_action] = brain_info.previous_vector_actions.reshape(
+                [-1, len(self.model.act_size)])
             if brain_info.memories.shape[1] == 0:
                 brain_info.memories = self.make_empty_memory(len(brain_info.agents))
             feed_dict[self.model.memory_in] = brain_info.memories
-        if self.use_continuous_act:
-            epsilon = np.random.normal(
-                size=(len(brain_info.vector_observations), self.model.act_size[0]))
-            feed_dict[self.model.epsilon] = epsilon
+        elif self.use_previous_action:
+            feed_dict[self.model.prev_action] = brain_info.previous_vector_actions.reshape(
+                [-1, len(self.model.act_size)])
 
         feed_dict = self._fill_eval_dict(feed_dict, brain_info)
 
@@ -120,7 +119,7 @@ class PPOPolicy(Policy):
         else:
             feed_dict[self.model.action_holder] = mini_batch['actions'].reshape(
                 [-1, len(self.model.act_size)])
-            if self.use_recurrent:
+            if self.use_recurrent or self.use_previous_action:
                 feed_dict[self.model.prev_action] = mini_batch['prev_action'].reshape(
                     [-1, len(self.model.act_size)])
             action_masks = mini_batch['action_mask'].reshape(
@@ -207,7 +206,7 @@ class PPOPolicy(Policy):
             if brain_info.memories.shape[1] == 0:
                 brain_info.memories = self.make_empty_memory(len(brain_info.agents))
             feed_dict[self.model.memory_in] = [brain_info.memories[idx]]
-        if not self.use_continuous_act and self.use_recurrent:
+        if self.use_recurrent or self.use_previous_action:
             feed_dict[self.model.prev_action] = brain_info.previous_vector_actions[idx].reshape(
                 [-1, len(self.model.act_size)])
         value_estimate = self.sess.run(self.model.value, feed_dict)
