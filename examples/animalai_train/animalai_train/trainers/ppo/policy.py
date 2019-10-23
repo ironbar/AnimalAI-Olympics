@@ -22,6 +22,7 @@ class PPOPolicy(Policy):
         self.use_curiosity = bool(trainer_params['use_curiosity'])
         self.action_mask_index = trainer_params['action_mask_index']
         self.use_previous_action = trainer_params['model_architecture']['use_previous_action']
+        self.use_map = trainer_params['model_architecture']['architecture'] == 'map'
 
         with self.graph.as_default():
             self.model = PPOModel(brain,
@@ -82,6 +83,8 @@ class PPOPolicy(Policy):
         elif self.use_previous_action:
             feed_dict[self.model.prev_action] = brain_info.previous_vector_actions.reshape(
                 [-1, len(self.model.act_size)])
+        if self.use_map:
+            feed_dict[self.model.map_in] = brain_info.heatmap
 
         feed_dict = self._fill_eval_dict(feed_dict, brain_info)
 
@@ -209,6 +212,8 @@ class PPOPolicy(Policy):
         if self.use_recurrent or self.use_previous_action:
             feed_dict[self.model.prev_action] = brain_info.previous_vector_actions[idx].reshape(
                 [-1, len(self.model.act_size)])
+        if self.use_map:
+            feed_dict[self.model.map_in] = brain_info.heatmap
         value_estimate = self.sess.run(self.model.value, feed_dict)
         return value_estimate
 
