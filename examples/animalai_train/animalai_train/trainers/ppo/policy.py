@@ -84,7 +84,7 @@ class PPOPolicy(Policy):
             feed_dict[self.model.prev_action] = brain_info.previous_vector_actions.reshape(
                 [-1, len(self.model.act_size)])
         if self.use_map:
-            feed_dict[self.model.map_in] = brain_info.heatmap
+            feed_dict[self.model.map_in] = brain_info.trajectory_map
 
         feed_dict = self._fill_eval_dict(feed_dict, brain_info)
 
@@ -210,7 +210,7 @@ class PPOPolicy(Policy):
             feed_dict[self.model.prev_action] = brain_info.previous_vector_actions[idx].reshape(
                 [-1, len(self.model.act_size)])
         if self.use_map:
-            feed_dict[self.model.map_in] = brain_info.heatmap
+            feed_dict[self.model.map_in] = brain_info.trajectory_map
         value_estimate = self.sess.run(self.model.value, feed_dict)
         return value_estimate
 
