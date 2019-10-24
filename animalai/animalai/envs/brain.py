@@ -117,6 +117,7 @@ class BrainInfo:
         self.action_masks = safe_concat_np_ndarray(
             self.action_masks, other.action_masks
         )
+        self.trajectory_map = safe_concat_np_ndarray(self.trajectory_map, other.trajectory_map)
         # self.custom_observations = safe_concat_lists(
         #     self.custom_observations, other.custom_observations
         # )
