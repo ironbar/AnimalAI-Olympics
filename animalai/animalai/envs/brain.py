@@ -11,7 +11,8 @@ logger = logging.getLogger("mlagents.envs")
 class BrainInfo:
     def __init__(self, visual_observation, vector_observation, text_observations, memory=None,
                  reward=None, agents=None, local_done=None,
-                 vector_action=None, text_action=None, max_reached=None, action_mask=None):
+                 vector_action=None, text_action=None, max_reached=None, action_mask=None,
+                 trajectory_map=None):
         """
         Describes experience at current step of all agents linked to a brain.
         """
@@ -26,6 +27,7 @@ class BrainInfo:
         self.previous_vector_actions = vector_action
         self.previous_text_actions = text_action
         self.action_masks = action_mask
+        self.trajectory_map = trajectory_map
 
     @staticmethod
     def process_pixels(image_bytes, gray_scale):

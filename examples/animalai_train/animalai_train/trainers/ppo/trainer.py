@@ -174,9 +174,7 @@ class PPOTrainer(Trainer):
             memories = np.vstack(memories)
         curr_info = BrainInfo(visual_observations, vector_observations, text_observations,
                               memories, rewards, agents, local_dones, prev_vector_actions,
-                              prev_text_actions, max_reacheds)
-        if self.policy.use_map:
-            curr_info.trajectory_map = trajectory_maps
+                              prev_text_actions, max_reacheds, trajectory_map=trajectory_maps)
         return curr_info
 
     def add_experiences(self, curr_all_info: AllBrainInfo, next_all_info: AllBrainInfo, take_action_outputs):
