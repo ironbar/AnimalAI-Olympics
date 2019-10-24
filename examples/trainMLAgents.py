@@ -56,10 +56,13 @@ def train(args=None):
     trainer_config = load_config(args.trainer_config_path)
     trainer_config['Learner']['reset_steps'] = args.reset_steps
     if args.n_envs > 1:
-        env_factory = partial(init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics, env_path=env_path, n_arenas=args.n_arenas)
+        env_factory = partial(
+            init_environment, docker_target_name=docker_target_name, no_graphics=no_graphics,
+            env_path=env_path, n_arenas=args.n_arenas, trainer_config=trainer_config)
         env = SubprocessUnityEnvironment(env_factory, args.n_envs)
     else:
-        env = init_environment(worker_id, env_path, docker_target_name, no_graphics, n_arenas=args.n_arenas)
+        env = init_environment(worker_id, env_path, docker_target_name, no_graphics,
+                               n_arenas=args.n_arenas, trainer_config=trainer_config)
 
     external_brains = {}
     for brain_name in env.external_brain_names:
@@ -87,7 +90,7 @@ def load_config(trainer_config_path):
                                         'Trainer Config from this path : {}'
                                         .format(trainer_config_path))
 
-def init_environment(worker_id, env_path, docker_target_name, no_graphics, n_arenas):
+def init_environment(worker_id, env_path, docker_target_name, no_graphics, n_arenas, trainer_config):
     if env_path is not None:
         # Strip out executable extensions if passed
         env_path = (env_path.strip()
@@ -103,7 +106,9 @@ def init_environment(worker_id, env_path, docker_target_name, no_graphics, n_are
         worker_id=worker_id,
         seed=worker_id,
         docker_training=docker_training,
-        play=False
+        play=False,
+        # TODO: make this more intelligent
+        map_side=trainer_config['Learner']['model_architecture']['map_encoding']['map_side'],
     )
 
 def parse_args(args):

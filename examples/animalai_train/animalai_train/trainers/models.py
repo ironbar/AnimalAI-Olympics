@@ -99,9 +99,8 @@ class LearningModel(object):
         else:
             return self.vector_in
 
-    def create_map_input(self):
-        # TODO: allow to change the shape
-        self.map_in = tf.placeholder(shape=[None, 60, 60, 1], dtype=tf.float32,
+    def create_map_input(self, map_side):
+        self.map_in = tf.placeholder(shape=[None, map_side, map_side, 1], dtype=tf.float32,
                                    name='map_input')
         return self.map_in
 
@@ -345,8 +344,8 @@ class LearningModel(object):
                 1, visual_encoding_conf=architecture['visual_encoding'], vector_encoding=architecture['vector_encoding'])
             hidden = hidden_streams[0]
 
-            map_input = self.create_map_input()
             map_encoding_conf = architecture['map_encoding']
+            map_input = self.create_map_input(map_encoding_conf['map_side'])
             encoded_map = self.create_visual_observation_encoder(
                 map_input, map_encoding_conf['hidden_units'],
                 self.swish, map_encoding_conf['num_layers'],

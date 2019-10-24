@@ -23,6 +23,7 @@ class PPOPolicy(Policy):
         self.action_mask_index = trainer_params['action_mask_index']
         self.use_previous_action = trainer_params['model_architecture']['use_previous_action']
         self.use_map = trainer_params['model_architecture']['architecture'] == 'map'
+        self.trainer_params = trainer_params
 
         with self.graph.as_default():
             self.model = PPOModel(brain,
@@ -151,8 +152,8 @@ class PPOPolicy(Policy):
             mem_in = mini_batch['memory'][:, 0, :]
             feed_dict[self.model.memory_in] = mem_in
         if self.use_map:
-            # TODO: allow to change the size
-            feed_dict[self.model.map_in] = mini_batch['map_in'].reshape(-1, 60, 60, 1)
+            map_side = self.trainer_params['model_architecture']['map_encoding']['map_side']
+            feed_dict[self.model.map_in] = mini_batch['map_in'].reshape(-1, map_side, map_side, 1)
         self.has_updated = True
         run_out = self._execute_model(feed_dict, self.update_dict)
         return run_out
