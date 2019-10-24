@@ -100,6 +100,7 @@ class LearningModel(object):
             return self.vector_in
 
     def create_map_input(self):
+        # TODO: allow to change the shape
         self.map_in = tf.placeholder(shape=[None, 60, 60, 1], dtype=tf.float32,
                                    name='map_input')
         return self.map_in

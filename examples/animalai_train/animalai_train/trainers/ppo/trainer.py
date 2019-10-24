@@ -147,6 +147,7 @@ class PPOTrainer(Trainer):
         agents = []
         prev_vector_actions = []
         prev_text_actions = []
+        heatmaps = []
         for agent_id in next_info.agents:
             agent_brain_info = self.training_buffer[agent_id].last_brain_info
             if agent_brain_info is None:
@@ -167,11 +168,15 @@ class PPOTrainer(Trainer):
             agents.append(agent_brain_info.agents[agent_index])
             prev_vector_actions.append(agent_brain_info.previous_vector_actions[agent_index])
             prev_text_actions.append(agent_brain_info.previous_text_actions[agent_index])
+            if self.policy.use_map:
+                heatmaps.append(agent_brain_info.heatmap[agent_index])
         if self.policy.use_recurrent:
             memories = np.vstack(memories)
         curr_info = BrainInfo(visual_observations, vector_observations, text_observations,
                               memories, rewards, agents, local_dones, prev_vector_actions,
                               prev_text_actions, max_reacheds)
+        if self.policy.use_map:
+            curr_info.heatmap = heatmaps
         return curr_info
 
     def add_experiences(self, curr_all_info: AllBrainInfo, next_all_info: AllBrainInfo, take_action_outputs):
@@ -211,6 +216,8 @@ class PPOTrainer(Trainer):
                         self.training_buffer[agent_id]['vector_obs'].append(stored_info.vector_observations[idx])
                         self.training_buffer[agent_id]['next_vector_in'].append(
                             next_info.vector_observations[next_idx])
+                    if self.policy.use_map:
+                        self.training_buffer[agent_id]['map_in'].append(stored_info.heatmap[idx])
                     if self.policy.use_recurrent:
                         if stored_info.memories.shape[1] == 0:
                             stored_info.memories = np.zeros((len(stored_info.agents), self.policy.m_size))
