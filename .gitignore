@@ -15,3 +15,5 @@ dist/
 *.egg-info*
 *.eggs*
 examples/old_summaries/*
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb
