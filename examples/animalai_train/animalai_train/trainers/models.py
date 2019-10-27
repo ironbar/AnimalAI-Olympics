@@ -272,7 +272,9 @@ class LearningModel(object):
         elif architecture['architecture'] == 'feedforward':
             self._create_feedforward_dc_actor_critic(architecture)
         elif architecture['architecture'] == 'map':
-                self._create_map_dc_actor_critic(architecture)
+            self._create_map_dc_actor_critic(architecture)
+        elif architecture['architecture'] == 'wba_prize':
+            self._create_wba_prize_dc_actor_critic(architecture)
         else:
             raise Exception('Unknown architecture: %s' % architecture['architecture'])
 
@@ -367,6 +369,47 @@ class LearningModel(object):
                 self.memory_out = tf.identity(memory_out, name='recurrent_out')
                 hidden = tf.concat([hidden, recurrent_output], axis=1)
 
+            hidden = self.create_vector_observation_encoder(
+                hidden, architecture['output_mlp']['hidden_units'], self.swish,
+                architecture['output_mlp']['num_layers'], "output_mlp", False)
+
+            self._prepare_model_outputs(hidden)
+
+    def _create_wba_prize_dc_actor_critic(self, architecture):
+        """
+        Creates Discrete control actor-critic model.
+        :param architecture: dictionary with all the configuration for the architecture
+        """
+        with tf.variable_scope('wba_prize_dc_actor_critic'):
+            hidden_streams = self.create_observation_streams(
+                1, visual_encoding_conf=architecture['visual_encoding'], vector_encoding=architecture['vector_encoding'])
+            hidden = hidden_streams[0]
+
+            map_encoding_conf = architecture['map_encoding']
+            map_input = self.create_map_input(map_encoding_conf['map_side'])
+            encoded_map = self.create_visual_observation_encoder(
+                map_input, map_encoding_conf['hidden_units'],
+                self.swish, map_encoding_conf['num_layers'],
+                "map_encoder", False, visual_encoding_conf=map_encoding_conf)
+
+            with tf.variable_scope('prev_action'):
+                self.prev_action = tf.placeholder(shape=[None, len(self.act_size)], dtype=tf.int32,
+                                                name='prev_action')
+                prev_action_oh = tf.concat([
+                    tf.one_hot(self.prev_action[:, i], self.act_size[i]) for i in
+                    range(len(self.act_size))], axis=1)
+            hidden = tf.concat([hidden, prev_action_oh, encoded_map], axis=1)
+
+            if self.use_recurrent:
+                # TODO: add residual mlp previously
+                self.memory_in = tf.placeholder(shape=[None, self.m_size], dtype=tf.float32,
+                                                name='recurrent_in')
+                recurrent_output, memory_out = self.create_recurrent_encoder(
+                    hidden, self.memory_in, self.sequence_length)
+                self.memory_out = tf.identity(memory_out, name='recurrent_out')
+                hidden = tf.concat([hidden, recurrent_output], axis=1)
+
+            # TODO: replace this layer by residual mlp
             hidden = self.create_vector_observation_encoder(
                 hidden, architecture['output_mlp']['hidden_units'], self.swish,
                 architecture['output_mlp']['num_layers'], "output_mlp", False)

@@ -22,7 +22,7 @@ class PPOPolicy(Policy):
         self.use_curiosity = bool(trainer_params['use_curiosity'])
         self.action_mask_index = trainer_params['action_mask_index']
         self.use_previous_action = trainer_params['model_architecture']['use_previous_action']
-        self.use_map = trainer_params['model_architecture']['architecture'] == 'map'
+        self.use_map = trainer_params['model_architecture']['architecture'] in ['map', 'wba_prize']
         self.trainer_params = trainer_params
 
         with self.graph.as_default():
