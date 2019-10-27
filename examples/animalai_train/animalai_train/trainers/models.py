@@ -129,14 +129,15 @@ class LearningModel(object):
         """
         with tf.variable_scope(scope):
             hidden = observation_input
+            residual = None
             for i in range(num_layers):
-                residual = hidden
                 hidden = tf.layers.dense(hidden, h_size, activation=activation, reuse=reuse,
                                          name="hidden_%i" % i,
                                          kernel_initializer=c_layers.variance_scaling_initializer(
                                              1.0))
-                if use_residual_connections:
+                if use_residual_connections and residual is not None:
                     hidden = hidden + residual
+                residual = hidden
         return hidden
 
     def create_convolutional_encoder(self, image_input, h_size, activation, num_layers, scope,
