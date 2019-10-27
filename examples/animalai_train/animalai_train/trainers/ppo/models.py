@@ -70,11 +70,11 @@ class PPOModel(LearningModel):
                     self.next_visual_in.append(next_visual_input)
 
                     # Create the encoder ops for current and next visual input. Not that these encoders are siamese.
-                    encoded_visual = self.create_visual_observation_encoder(self.visual_in[i], self.curiosity_enc_size,
+                    encoded_visual = self.create_convolutional_encoder(self.visual_in[i], self.curiosity_enc_size,
                                                                             self.swish, 1, "stream_{}_visual_obs_encoder"
                                                                             .format(i), False, visual_encoding_conf=self._visual_encoding_conf)
 
-                    encoded_next_visual = self.create_visual_observation_encoder(self.next_visual_in[i],
+                    encoded_next_visual = self.create_convolutional_encoder(self.next_visual_in[i],
                                                                                 self.curiosity_enc_size,
                                                                                 self.swish, 1,
                                                                                 "stream_{}_visual_obs_encoder".format(i),
@@ -93,11 +93,11 @@ class PPOModel(LearningModel):
                 self.next_vector_in = tf.placeholder(shape=[None, self.vec_obs_size], dtype=tf.float32,
                                                     name='next_vector_observation')
 
-                encoded_vector_obs = self.create_vector_observation_encoder(self.vector_in,
+                encoded_vector_obs = self.create_mlp_encoder(self.vector_in,
                                                                             self.curiosity_enc_size,
                                                                             self.swish, 2, "vector_obs_encoder",
                                                                             False)
-                encoded_next_vector_obs = self.create_vector_observation_encoder(self.next_vector_in,
+                encoded_next_vector_obs = self.create_mlp_encoder(self.next_vector_in,
                                                                                 self.curiosity_enc_size,
                                                                                 self.swish, 2,
                                                                                     "vector_obs_encoder",

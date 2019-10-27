@@ -115,8 +115,8 @@ class LearningModel(object):
         return update_mean, update_variance
 
     @staticmethod
-    def create_vector_observation_encoder(observation_input, h_size, activation, num_layers, scope,
-                                          reuse):
+    def create_mlp_encoder(observation_input, h_size, activation, num_layers, scope,
+                                          reuse, use_residual_connections=False):
         """
         Builds a set of hidden state encoders.
         :param reuse: Whether to re-use the weights within the same scope.
@@ -130,13 +130,16 @@ class LearningModel(object):
         with tf.variable_scope(scope):
             hidden = observation_input
             for i in range(num_layers):
+                residual = hidden
                 hidden = tf.layers.dense(hidden, h_size, activation=activation, reuse=reuse,
                                          name="hidden_%i" % i,
                                          kernel_initializer=c_layers.variance_scaling_initializer(
                                              1.0))
+                if use_residual_connections:
+                    hidden = hidden + residual
         return hidden
 
-    def create_visual_observation_encoder(self, image_input, h_size, activation, num_layers, scope,
+    def create_convolutional_encoder(self, image_input, h_size, activation, num_layers, scope,
                                           reuse, visual_encoding_conf):
         """
         Builds a set of visual (CNN) encoders.
@@ -164,7 +167,7 @@ class LearningModel(object):
                 if use_maxpool:
                     output = tf.layers.max_pooling2d(output, pool_size=2, strides=2)
             hidden = c_layers.flatten(output)
-            hidden_flat = self.create_vector_observation_encoder(hidden, h_size, activation,
+            hidden_flat = self.create_mlp_encoder(hidden, h_size, activation,
                                                                 num_layers, 'flat_encoding', reuse)
         return hidden_flat
 
@@ -214,7 +217,7 @@ class LearningModel(object):
                 hidden_state, hidden_visual = None, None
                 if self.vis_obs_size > 0:
                     for j in range(brain.number_visual_observations):
-                        encoded_visual = self.create_visual_observation_encoder(
+                        encoded_visual = self.create_convolutional_encoder(
                             self.visual_in[j], visual_encoding_conf['hidden_units'],
                             activation_fn, visual_encoding_conf['num_layers'],
                             "main_graph_{}_encoder{}".format(i, j), False,
@@ -222,7 +225,7 @@ class LearningModel(object):
                         visual_encoders.append(encoded_visual)
                     hidden_visual = tf.concat(visual_encoders, axis=1)
                 if brain.vector_observation_space_size > 0:
-                    hidden_state = self.create_vector_observation_encoder(
+                    hidden_state = self.create_mlp_encoder(
                         vector_observation_input, vector_encoding['hidden_units'], activation_fn,
                         vector_encoding['num_layers'], "main_graph_{}".format(i), False)
                 if hidden_state is not None and hidden_visual is not None:
@@ -330,7 +333,7 @@ class LearningModel(object):
                 self.memory_out = tf.identity(memory_out, name='recurrent_out')
                 hidden = tf.concat([hidden, recurrent_output], axis=1)
 
-            hidden = self.create_vector_observation_encoder(
+            hidden = self.create_mlp_encoder(
                 hidden, architecture['output_mlp']['hidden_units'], self.swish,
                 architecture['output_mlp']['num_layers'], "output_mlp", False)
 
@@ -348,7 +351,7 @@ class LearningModel(object):
 
             map_encoding_conf = architecture['map_encoding']
             map_input = self.create_map_input(map_encoding_conf['map_side'])
-            encoded_map = self.create_visual_observation_encoder(
+            encoded_map = self.create_convolutional_encoder(
                 map_input, map_encoding_conf['hidden_units'],
                 self.swish, map_encoding_conf['num_layers'],
                 "map_encoder", False, visual_encoding_conf=map_encoding_conf)
@@ -369,7 +372,7 @@ class LearningModel(object):
                 self.memory_out = tf.identity(memory_out, name='recurrent_out')
                 hidden = tf.concat([hidden, recurrent_output], axis=1)
 
-            hidden = self.create_vector_observation_encoder(
+            hidden = self.create_mlp_encoder(
                 hidden, architecture['output_mlp']['hidden_units'], self.swish,
                 architecture['output_mlp']['num_layers'], "output_mlp", False)
 
@@ -387,7 +390,7 @@ class LearningModel(object):
 
             map_encoding_conf = architecture['map_encoding']
             map_input = self.create_map_input(map_encoding_conf['map_side'])
-            encoded_map = self.create_visual_observation_encoder(
+            encoded_map = self.create_convolutional_encoder(
                 map_input, map_encoding_conf['hidden_units'],
                 self.swish, map_encoding_conf['num_layers'],
                 "map_encoder", False, visual_encoding_conf=map_encoding_conf)
@@ -401,18 +404,21 @@ class LearningModel(object):
             hidden = tf.concat([hidden, prev_action_oh, encoded_map], axis=1)
 
             if self.use_recurrent:
-                # TODO: add residual mlp previously
+                recurrent_input = self.create_mlp_encoder(
+                    hidden, architecture['recurrent_mlp']['hidden_units'], self.swish,
+                    architecture['recurrent_mlp']['num_layers'], "recurrent_residual_mlp", False,
+                    use_residual_connections=True)
                 self.memory_in = tf.placeholder(shape=[None, self.m_size], dtype=tf.float32,
                                                 name='recurrent_in')
                 recurrent_output, memory_out = self.create_recurrent_encoder(
-                    hidden, self.memory_in, self.sequence_length)
+                    recurrent_input, self.memory_in, self.sequence_length)
                 self.memory_out = tf.identity(memory_out, name='recurrent_out')
                 hidden = tf.concat([hidden, recurrent_output], axis=1)
 
-            # TODO: replace this layer by residual mlp
-            hidden = self.create_vector_observation_encoder(
+            hidden = self.create_mlp_encoder(
                 hidden, architecture['output_mlp']['hidden_units'], self.swish,
-                architecture['output_mlp']['num_layers'], "output_mlp", False)
+                architecture['output_mlp']['num_layers'], "output_residual_mlp", False,
+                use_residual_connections=True)
 
             self._prepare_model_outputs(hidden)
 
