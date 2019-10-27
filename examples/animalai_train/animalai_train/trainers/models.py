@@ -406,8 +406,8 @@ class LearningModel(object):
             if self.use_recurrent:
                 recurrent_input = self.create_mlp_encoder(
                     hidden, architecture['recurrent_mlp']['hidden_units'], self.swish,
-                    architecture['recurrent_mlp']['num_layers'], "recurrent_residual_mlp", False,
-                    use_residual_connections=True)
+                    architecture['recurrent_mlp']['num_layers'], scope="recurrent_residual_mlp",
+                    reuse=False, use_residual_connections=True)
                 self.memory_in = tf.placeholder(shape=[None, self.m_size], dtype=tf.float32,
                                                 name='recurrent_in')
                 recurrent_output, memory_out = self.create_recurrent_encoder(
@@ -417,7 +417,7 @@ class LearningModel(object):
 
             hidden = self.create_mlp_encoder(
                 hidden, architecture['output_mlp']['hidden_units'], self.swish,
-                architecture['output_mlp']['num_layers'], "output_residual_mlp", False,
+                architecture['output_mlp']['num_layers'], scope="output_residual_mlp", reuse=False,
                 use_residual_connections=True)
 
             self._prepare_model_outputs(hidden)
